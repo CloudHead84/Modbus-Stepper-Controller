@@ -1,0 +1,32 @@
+FUNCTION_BLOCK MC_Power
+VAR_INPUT
+	I_xEnable 	: BOOL;
+END_VAR
+VAR_OUTPUT
+	Q_xStatus	: BOOL;
+	Q_xBusy 	: BOOL;
+	Q_xError 	: BOOL;	
+END_VAR
+VAR
+	ton_Error	: TON;
+END_VAR
+VAR_IN_OUT
+	Axis : Axis_Ref;
+END_VAR
+
+//timeout error
+ton_Error(	IN		:= Axis.OUT_xPowerOn <> Axis.IN_xPowered, 
+			PT		:= Axis.INTERN_tErrorTime);
+
+//reset global error		
+IF ton_Error.Q THEN
+	Axis.INTERN_xErrorBlock := TRUE;
+END_IF
+
+//block outputs
+Q_xStatus 			:= Axis.IN_xPowered AND Axis.IN_xPowered;
+Q_xError			:= ton_Error.Q;
+Q_xBusy				:= (Axis.OUT_xPowerOn <> Axis.IN_xPowered) AND NOT ton_Error.Q;
+
+//outputs to axis
+Axis.OUT_xPowerOn 	:= I_xEnable;
