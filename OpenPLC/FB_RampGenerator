@@ -1,0 +1,60 @@
+FUNCTION_BLOCK FB_RampGenerator
+VAR_INPUT
+	I_xEnable	: BOOL;
+	I_rValue	: REAL;
+	I_rRampUp	: REAL := 10;
+	I_rRampDown : REAL := 10;
+END_VAR
+VAR_OUTPUT
+	Q_rActualValue :REAL;
+END_VAR
+VAR
+	TON_Update 	: TON;
+	xAccelerationPos : BOOL;	
+	xDecelerationPos : BOOL;
+	xAccelerationNeg : BOOL;	
+	xDecelerationNeg : BOOL;
+	xRunning 	: BOOL;	
+END_VAR
+VAR CONSTANT 
+	C_rMax : REAL := 1000;
+	C_rMin : REAL := -1000;	
+END_VAR
+
+xRunning := Q_rActualValue <> 0;
+TON_Update(IN:= NOT TON_Update.Q, PT:=T#1S);
+
+
+
+xAccelerationPos := I_rValue > Q_rActualValue AND I_rValue > 0;
+xAccelerationNeg :=	I_rValue < Q_rActualValue AND I_rValue < 0;
+
+
+xDecelerationPos := I_rValue < Q_rActualValue AND Q_rActualValue > 0;
+xDecelerationNeg := I_rValue > Q_rActualValue AND Q_rActualValue < 0;
+
+
+
+IF	xAccelerationPos AND TON_Update.Q THEN
+
+	Q_rActualValue := Q_rActualValue + I_rRampUp;
+	Q_rActualValue := LIMIT(C_rMin,Q_rActualValue,I_rValue);
+
+	
+ELSIF xDecelerationNeg AND TON_Update.Q THEN	
+
+	Q_rActualValue := Q_rActualValue + I_rRampDown;
+	Q_rActualValue := LIMIT(C_rMin,Q_rActualValue,C_rMax);		
+
+ELSIF xAccelerationNeg AND TON_Update.Q THEN
+
+	Q_rActualValue := Q_rActualValue - I_rRampUp;
+	Q_rActualValue := LIMIT(I_rValue,Q_rActualValue,C_rMax);
+
+	
+ELSIF xDecelerationPos AND TON_Update.Q THEN	
+
+	Q_rActualValue := Q_rActualValue - I_rRampDown;
+	Q_rActualValue := LIMIT(C_rMin,Q_rActualValue,C_rMax);	
+
+END_IF
