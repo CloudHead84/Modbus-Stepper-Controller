@@ -1,0 +1,42 @@
+FUNCTION_BLOCK MC_Reset
+VAR_INPUT
+	I_xExecute 	: BOOL;
+END_VAR
+VAR_OUTPUT
+	Q_xDone		: BOOL;
+	Q_xBusy 	: BOOL;
+	Q_xError 	: BOOL;		
+END_VAR
+VAR
+	ton_Error	: TON;
+	tof_Reset	: TOF;
+END_VAR
+VAR_IN_OUT
+	Axis : Axis_Ref;
+END_VAR
+
+//reset signal
+tof_Reset(	IN		:= I_xExecute, 
+			PT		:= T#1S);		
+
+//timeout error
+ton_Error(	IN		:= Axis.INTERN_xErrorBlock AND Axis.INTERN_xReset, 
+			PT		:= Axis.INTERN_tErrorTime);
+
+//reset global error
+IF Axis.INTERN_xReset THEN
+	Axis.INTERN_xErrorBlock := FALSE;
+END_IF
+
+//set error			
+IF ton_Error.Q THEN
+	Axis.INTERN_xErrorBlock := TRUE;
+END_IF
+
+//outputs to axis
+Q_xDone := NOT Axis.INTERN_xErrorBlock AND Axis.INTERN_xReset AND NOT ton_Error.Q;
+Q_xBusy := Axis.INTERN_xErrorBlock AND Axis.INTERN_xReset AND NOT ton_Error.Q;
+Q_xError:= ton_Error.Q;
+
+//outputs to axis
+Axis.INTERN_xReset := tof_Reset.Q;
