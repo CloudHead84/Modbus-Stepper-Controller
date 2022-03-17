@@ -1,0 +1,17 @@
+TYPE AXIS_REF :
+STRUCT
+	IN_xPowered			: BOOL;
+	IN_iActualPosition	: INT;
+	IN_iActualSpeed		: INT;	
+	
+	OUT_xPowerOn 		: BOOL;
+	OUT_iMode			: INT; // 0: Nothing
+	OUT_iTargetPosition : INT;
+	OUT_iTargetSpeed 	: INT;
+	
+	INTERN_tErrorTime 	: TIME := T#2S;
+	INTERN_xErrorBlock	: BOOL;	
+	INTERN_xReset		: BOOL;
+
+END_STRUCT
+END_TYPE
