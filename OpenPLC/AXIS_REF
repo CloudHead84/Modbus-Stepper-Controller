@@ -1,17 +1,22 @@
 TYPE AXIS_REF :
 STRUCT
-	IN_xPowered			: BOOL;
-	IN_iActualPosition	: INT;
-	IN_iActualSpeed		: INT;	
+	IN_xPowered		: BOOL; // axis is enabled/powered
+	IN_xRunning		: BOOL; // start was acknowledged, axis is underway
+	IN_iActualPosition	: INT; // position Feedback of axis in steps
+	IN_iActualSpeed		: INT; // speed feeback of axis in steps/sec
+	IN_iCheckSum		: INT; // checksum, built out of operation mode, target position, speed, acceleration and deceleration
 	
-	OUT_xPowerOn 		: BOOL;
-	OUT_iMode			: INT; // 0: Nothing
-	OUT_iTargetPosition : INT;
-	OUT_iTargetSpeed 	: INT;
+	OUT_xPowerOnReq 	: BOOL; // requesting power on
+	OUT_xStartReq		: BOOL; // start request. issued if checksum checks out
+	OUT_iModeReq		: INT; // operation mode request 0=dle 10to19=Jog 20to29=homing 30to39=speed 40to49=absolute positioning 50to59 relative positioning
+	OUT_iTargetPosition 	: INT; // target position in steps
+	OUT_iTargetSpeed 	: INT; // target speed in steps/sec
+	OUT_iTargetAcc		: INT; // target acceleration in steps/s^2
+	OUT_iTargetDec		: INT; // target deceleration in steps/s^2
 	
-	INTERN_tErrorTime 	: TIME := T#2S;
-	INTERN_xErrorBlock	: BOOL;	
-	INTERN_xReset		: BOOL;
-
+	INTERN_tErrorTime 	: TIME := T#2S; // time to feeback timeout
+	INTERN_xErrorBlock	: BOOL;	// an "blocking" error is present
+	INTERN_xReset		: BOOL; // reset all errors
+	INTERN_xReady		: BOOL; // axis is ready to run
 END_STRUCT
 END_TYPE
