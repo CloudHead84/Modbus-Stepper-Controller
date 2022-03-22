@@ -5,5 +5,10 @@ So this project consists of two parts:
 1 - The MCU (teensy) firmware
 2 - The accompanying library for PLC (OpenPLC or Codesys)
 
-First Prototype for testing communication via modbus and implementing the slave firmware in arduino
+
+![Test](https://user-images.githubusercontent.com/101837284/159583834-0b0fe905-bf78-46a9-b57c-8987204d72fe.png)
+
+
+First Prototype for testing communication via modbus and implementing the slave firmware in arduino:
+
 ![FIrst Prototype](https://user-images.githubusercontent.com/101837284/158897530-49c3237d-0893-4524-8a08-eb9b87bab08a.jpg)
