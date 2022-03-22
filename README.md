@@ -15,6 +15,6 @@ First Prototype for testing communication via modbus and implementing the slave 
 
 
 
-![vids](https://youtube.com/shorts/akJ87RP2c9Q?feature=share)
+video: https://youtube.com/shorts/akJ87RP2c9Q?feature=share
 
 ![FIrst Prototype](https://user-images.githubusercontent.com/101837284/158897530-49c3237d-0893-4524-8a08-eb9b87bab08a.jpg)
