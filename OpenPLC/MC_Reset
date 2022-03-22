@@ -36,7 +36,7 @@ END_IF
 //outputs to axis
 Q_xDone := NOT Axis.INTERN_xErrorBlock AND Axis.INTERN_xReset AND NOT ton_Error.Q;
 Q_xBusy := Axis.INTERN_xErrorBlock AND Axis.INTERN_xReset AND NOT ton_Error.Q;
-Q_xError:= ton_Error.Q;
+Q_xError:= ton_Error.Q OR Axis.INTERN_xErrorBlock ;
 
 //outputs to axis
 Axis.INTERN_xReset := tof_Reset.Q;
