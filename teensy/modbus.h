@@ -23,8 +23,8 @@
 
 #define MAX_DISCRETE_INPUT 		8
 #define MAX_COILS 				8
-#define MAX_HOLD_REGS 			2
-#define MAX_INP_REGS			2
+#define MAX_HOLD_REGS 			5
+#define MAX_INP_REGS			3
 
 #define MB_FC_NONE							0
 #define MB_FC_READ_COILS					1
