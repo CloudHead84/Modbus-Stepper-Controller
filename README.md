@@ -2,6 +2,7 @@
 Step/Dir Controller based on teensy. Acts as a Modbus tcp slave, so a modbus master is needed for the setup. the master will need a library issuing different commands over the modbus registers.
 
 So this project consists of two parts:
+
 1 - The MCU (teensy) firmware
 
 2 - The accompanying library for PLC (OpenPLC or Codesys)
