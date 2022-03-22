@@ -1,0 +1,4 @@
+this folder contains all openPLC motion function blocks.
+Copy-Paste to codesys.
+
+A codesys lib-file will follow at first release.
