@@ -8,6 +8,7 @@ STRUCT
 	
 	OUT_xPowerOnReq 	: BOOL; // requesting power on
 	OUT_xStartReq		: BOOL; // start request. issued if checksum checks out
+	OUT_xStopReq		: BOOL; // stop request. issued if checksum checks out	
 	OUT_iModeReq		: INT; // operation mode request 0=dle 10to19=Jog 20to29=homing 30to39=speed 40to49=absolute positioning 50to59 relative positioning
 	OUT_iTargetPosition 	: INT; // target position in steps
 	OUT_iTargetSpeed 	: INT; // target speed in steps/sec
