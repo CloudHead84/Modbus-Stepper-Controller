@@ -15,7 +15,7 @@ VAR_IN_OUT
 END_VAR
 
 //timeout error
-ton_Error(	IN		:= Axis.OUT_xPowerOn <> Axis.IN_xPowered, 
+ton_Error(	IN		:= Axis.OUT_xPowerOnReq <> Axis.IN_xPowered, 
 			PT		:= Axis.INTERN_tErrorTime);
 
 //reset global error		
@@ -26,7 +26,7 @@ END_IF
 //block outputs
 Q_xStatus 			:= Axis.IN_xPowered AND Axis.IN_xPowered;
 Q_xError			:= ton_Error.Q;
-Q_xBusy				:= (Axis.OUT_xPowerOn <> Axis.IN_xPowered) AND NOT ton_Error.Q;
+Q_xBusy				:= (Axis.OUT_xPowerOnReq <> Axis.IN_xPowered) AND NOT ton_Error.Q;
 
 //outputs to axis
-Axis.OUT_xPowerOn 	:= I_xEnable;
+Axis.OUT_xPowerOnReq 	:= I_xEnable;
