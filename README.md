@@ -3,17 +3,12 @@ Step/Dir Controller based on teensy. Acts as a Modbus tcp slave, so a modbus mas
 
 So this project consists of two parts:
 
-1 - The MCU (teensy 4.1) firmware
-
-2 - The accompanying library for the PLC (OpenPLC or Codesys)
-
+1 - The MCU (teensy 4.1) firmware  
+2 - The accompanying library for the PLC (OpenPLC or Codesys)  
 
 ![Test](https://user-images.githubusercontent.com/101837284/159583834-0b0fe905-bf78-46a9-b57c-8987204d72fe.png)
 
-
 First Prototype for testing communication via modbus and implementing the slave firmware in arduino:
-
-
 
 video: https://youtube.com/shorts/akJ87RP2c9Q?feature=share
 
