@@ -1,0 +1,29 @@
+FUNCTION_BLOCK MC_Stop
+VAR_INPUT
+	I_xExecute		: BOOL;
+	I_rDeceleration	: REAL;
+END_VAR
+VAR_OUTPUT
+	Q_xDone			: BOOL;
+	Q_xBusy			: BOOL;
+	Q_xActive		: BOOL;
+	Q_xError		: BOOL;
+END_VAR
+VAR
+END_VAR
+VAR_IN_OUT
+	Axis : Axis_Ref;
+END_VAR
+
+IF 	NOT axis.INTERN_xBusy 
+	AND axis.INTERN_xReady 
+	AND Axis.IN_xRunning 
+	AND I_xExecute 
+THEN
+	Axis.OUT_iModeReq := 0;
+	Axis.OUT_rTargetDec := I_rDeceleration;
+	Axis.OUT_rTargetSpeed := 0;	
+END_IF
+
+Q_xDone := I_xExecute AND NOT Axis.IN_xRunning;
+Q_xBusy := I_xExecute AND NOT Q_xDone;
