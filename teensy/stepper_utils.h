@@ -17,7 +17,7 @@ struct REF_AXIS {
     bool OUT_xRunning;   
     long OUT_diActualPosition;  
     float OUT_rActualSpeed;   
-    int OUT_iCheckSum;   
+    word OUT_wCheckSum;   
 } ; 
 
 //-----------------------------------------------------------------------------
@@ -49,5 +49,24 @@ long create_words(long in, bool selection)
       tmpLong = (in >> 16);
       result = (word)tmpLong;
     }
+    return result;
+}
+
+
+
+//-----------------------------------------------------------------------------
+// word to float
+//-----------------------------------------------------------------------------
+long word_to_float(word in)
+{
+    float result;
+
+    if (in < 32768){
+      result = (float)in;
+    }
+    else{
+      result = (float)in - 65536;
+    }
+
     return result;
 }
