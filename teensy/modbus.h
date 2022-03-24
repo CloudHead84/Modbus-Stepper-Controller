@@ -21,10 +21,11 @@
 // Thiago Alves, Aug 2018
 //-----------------------------------------------------------------------------
 
-#define MAX_DISCRETE_INPUT 		8
-#define MAX_COILS 				8
-#define MAX_HOLD_REGS 			5
-#define MAX_INP_REGS			3
+#define MAX_AXIS     5 
+#define MAX_DISCRETE_INPUT 		8 * MAX_AXIS  
+#define MAX_COILS 			8 * MAX_AXIS 
+#define MAX_HOLD_REGS 			6 * MAX_AXIS 
+#define MAX_INP_REGS			4 * MAX_AXIS
 
 #define MB_FC_NONE							0
 #define MB_FC_READ_COILS					1
