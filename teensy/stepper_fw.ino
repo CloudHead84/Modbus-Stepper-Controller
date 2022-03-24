@@ -51,19 +51,20 @@ void updateIO()
     axis[0].IN_xPowerOnReq = mb_coils[1];
     axis[0].IN_xStartReq = mb_coils[2];
     axis[0].IN_xStopReq = mb_coils[3];      
-    axis[0].IN_iModeReq = mb_holding_regs[0];   
-    axis[0].IN_iTargetPosition = mb_holding_regs[1];
-    axis[0].IN_iTargetSpeed = mb_holding_regs[2];   
-    axis[0].IN_iTargetAcc = mb_holding_regs[3];
-    axis[0].IN_iTargetDec = mb_holding_regs[4];   
+    axis[0].IN_iModeReq = (int)mb_holding_regs[0];   
+    axis[0].IN_diTargetPosition = create_long(mb_holding_regs[1],mb_holding_regs[2]);   
+    axis[0].IN_rTargetSpeed = (float)mb_holding_regs[3];   
+    axis[0].IN_rTargetAcc = (float)mb_holding_regs[4];
+    axis[0].IN_rTargetDec = (float)mb_holding_regs[5];   
       
     //OUTs        
     mb_discrete_input[0] = axis[0].OUT_xLifeBitFB;
     mb_discrete_input[1] = axis[0].OUT_xPowered;    
     mb_discrete_input[2] = axis[0].OUT_xRunning;       
-    mb_input_regs[0] = axis[0].OUT_iActualPosition;
-    mb_input_regs[1] = axis[0].OUT_iActualSpeed; 
-    mb_input_regs[2] = axis[0].OUT_iCheckSum;         
+    mb_input_regs[0] = create_words(axis[0].OUT_diActualPosition,false);
+    mb_input_regs[1] = create_words(axis[0].OUT_diActualPosition,true);
+    mb_input_regs[2] = axis[0].OUT_rActualSpeed; 
+    mb_input_regs[3] = axis[0].OUT_iCheckSum;         
 }
 
 
@@ -77,8 +78,8 @@ void thread_stepper() {
 
     if (axis[0].IN_xStartReq) 
         {
-        stepper1.setSpeed(axis[0].IN_iTargetSpeed);
-        stepper1.moveTo(axis[0].IN_iTargetPosition); 
+        stepper1.setSpeed(axis[0].IN_rTargetSpeed);
+        stepper1.moveTo(axis[0].IN_diTargetPosition); 
     }
     if (axis[0].IN_xStopReq) 
     {
@@ -94,12 +95,14 @@ void thread_stepper() {
         stepper1.disableOutputs();
         axis[0].OUT_xPowered = false;
      }
+     
      stepper1.runSpeed();
-     axis[0].OUT_iActualPosition = stepper1.currentPosition(); 
-     axis[0].OUT_iActualSpeed = stepper1.speed();
+     
+     axis[0].OUT_diActualPosition = stepper1.currentPosition(); 
+     axis[0].OUT_rActualSpeed = stepper1.speed();
      axis[0].OUT_xRunning = stepper1.isRunning();  
      axis[0].OUT_xLifeBitFB = axis[0].IN_xLifeBit; 
-     axis[0].OUT_iCheckSum = ((axis[0].IN_iModeReq * 100) + axis[0].IN_iTargetPosition + axis[0].IN_iTargetSpeed + axis[0].IN_iTargetAcc + axis[0].IN_iTargetDec) / 100;
+     axis[0].OUT_iCheckSum = ((axis[0].IN_iModeReq * 100) + axis[0].IN_diTargetPosition + axis[0].IN_rTargetSpeed + axis[0].IN_rTargetAcc + axis[0].IN_rTargetDec) / 100;
      threads.yield();
   }
 }
