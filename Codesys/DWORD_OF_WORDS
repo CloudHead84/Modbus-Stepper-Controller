@@ -1,0 +1,17 @@
+FUNCTION DWORD_OF_WORDS : bool
+VAR_INPUT
+	IN : DWORD;
+END_VAR
+VAR_OUTPUT
+	LOW : WORD;
+	HIGH : WORD;
+END_VAR
+VAR
+	tmpDword :DWORD;
+END_VAR
+
+
+tmpDword := SHL(IN,16);
+tmpDword := SHR(tmpDword,16);
+LOW := DWORD_TO_WORD(tmpDword);
+HIGH := DWORD_TO_WORD( SHR(IN,16));
