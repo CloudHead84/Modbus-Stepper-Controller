@@ -1,26 +1,29 @@
+FUNCTION_BLOCK MC_AxisModbus
 VAR_INPUT
-	I_rUnitsPerTurn		: REAL := 1; // user units (mm, deg, perc) per turn
-	I_iFullSteps		: INT := 200; // fullsteps per turn
-	I_iMicrostepping	: INT := 1; // microstepping x 1/2/4/8/16/32 supported
-// Hardware	
-	HW_I_xLifeBitFB		: BOOL;
-	HW_I_xPowered		: BOOL;
-	HW_I_xRunning		: BOOL;
-	HW_I_wActualPosition: WORD;
-	HW_I_wActualSpeed	: WORD;
-	HW_I_wCheckSum		: WORD;
+	I_rUnitsPerTurn			: REAL := 1; (* user units (mm, deg, perc) per turn*)
+	I_iFullSteps			: INT := 200; (* fullsteps per turn*)
+	I_iMicrostepping		: INT := 1; (* microstepping x 1/2/4/8/16/32 supported *)
+(* Hardware	*)
+	HW_I_xLifeBitFB			: BOOL;
+	HW_I_xPowered			: BOOL;
+	HW_I_xRunning			: BOOL;
+	HW_I_wActualPositionL	: WORD;
+	HW_I_wActualPositionH	: WORD;	
+	HW_I_wActualSpeed		: WORD;
+	HW_I_wCheckSum			: WORD;
 
 END_VAR
 VAR_OUTPUT
-	HW_Q_xLifeBit		: BOOL;
-	HW_Q_xPowerOnReq	: BOOL;
-	HW_Q_xStartReq		: BOOL;
-	HW_Q_xStopReq		: BOOL;	
-	HW_Q_wModeReq		: WORD;
-	HW_Q_wTargetPosition: WORD;
-	HW_Q_wTargetSpeed	: WORD;
-	HW_Q_wTargetAcc		: WORD;
-	HW_Q_wTargetDec		: WORD;	
+	HW_Q_xLifeBit			: BOOL;
+	HW_Q_xPowerOnReq		: BOOL;
+	HW_Q_xStartReq			: BOOL;
+	HW_Q_xStopReq			: BOOL;	
+	HW_Q_wModeReq			: WORD;
+	HW_Q_wTargetPositionL	: WORD;
+	HW_Q_wTargetPositionH	: WORD;
+	HW_Q_wTargetSpeed		: WORD;
+	HW_Q_wTargetAcc			: WORD;
+	HW_Q_wTargetDec			: WORD;	
 END_VAR
 VAR
 	rMicroStepsPerTurn	: REAL;
@@ -33,17 +36,31 @@ END_VAR
 
 rMicroStepsPerTurn := INT_TO_REAL(I_iFullSteps * I_iMicrostepping);
 
-
-// Lifebit
+(* lifebit *)
 HW_Q_xLifeBit := NOT HW_I_xLifeBitFB;
 
-
-// Power
+(* power *)
 HW_Q_xPowerOnReq := axis.OUT_xPowerOnReq;
 axis.IN_xPowered := HW_I_xPowered;
 
-
-// start and running
+(* start, stop and running *)
 HW_Q_xStartReq	:= axis.OUT_xStartReq;
 HW_Q_xStopReq	:= axis.OUT_xStopReq;
 axis.IN_xRunning := HW_I_xRunning;
+
+(* mode *)
+HW_Q_wModeReq := INT_TO_WORD(axis.OUT_iModeReq);
+
+(* position *)
+axis.IN_rActualPosition := DWORD_TO_REAL(WORDS_OF_DWORD(LOW:= HW_I_wActualPositionL, HIGH:=HW_I_wActualPositionH));
+DWORD_OF_WORDS(IN:= REAL_TO_DWORD(axis.OUT_rTargetPosition), LOW=>HW_Q_wTargetPositionL , HIGH=>HW_Q_wTargetPositionH );
+
+(* speed *)
+axis.IN_rActualSpeed := WORD_TO_REAL(HW_I_wActualSpeed);
+HW_Q_wTargetSpeed := REAL_TO_WORD(axis.OUT_rTargetSpeed);
+
+(* acceleration and deceleration *)
+HW_Q_wTargetAcc := REAL_TO_WORD(axis.OUT_rTargetAcc);
+HW_Q_wTargetDec := REAL_TO_WORD(axis.OUT_rTargetDec);
+
+
