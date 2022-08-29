@@ -7,6 +7,8 @@ VAR_INPUT
 	HW_I_xLifeBitFB			: BOOL;
 	HW_I_xPowered			: BOOL;
 	HW_I_xRunning			: BOOL;
+	HW_I_xAck				: BOOL;
+	HW_I_xSwitch			: BOOL;
 	HW_I_wActualPositionL	: WORD;
 	HW_I_wActualPositionH	: WORD;	
 	HW_I_wActualSpeed		: WORD;
@@ -27,7 +29,11 @@ VAR_OUTPUT
 END_VAR
 VAR
 	rMicroStepsPerTurn	: REAL;
-	rGearRatio			: REAL;
+	rMicroStepsPerUnit	: REAL;
+	tmpDINT				: DINT;
+	internChecksum		: INT;
+	TOF_Connected		: TOF;
+	
 END_VAR
 VAR_IN_OUT
 	Axis : Axis_Ref;
@@ -35,32 +41,64 @@ END_VAR
 
 
 rMicroStepsPerTurn := INT_TO_REAL(I_iFullSteps * I_iMicrostepping);
+rMicroStepsPerUnit := rMicroStepsPerTurn / I_rUnitsPerTurn;
 
-(* lifebit *)
+(* lifebit and errors*)
+TOF_Connected(IN:= HW_Q_xLifeBit = HW_I_xLifeBitFB, PT:=axis.INTERN_tErrorTime);
+IF NOT TOF_Connected.Q THEN
+	axis.INTERN_xErrorStop := TRUE;
+END_IF;
 HW_Q_xLifeBit := NOT HW_I_xLifeBitFB;
+
+IF axis.INTERN_xErrorStop THEN
+	axis.OUT_xStartReq 	:= FALSE;
+	axis.OUT_xStopReq 	:= FALSE;
+END_IF
+
 
 (* power *)
 HW_Q_xPowerOnReq := axis.OUT_xPowerOnReq;
 axis.IN_xPowered := HW_I_xPowered;
 
-(* start, stop and running *)
+(* start, stop, ack and running *)
 HW_Q_xStartReq	:= axis.OUT_xStartReq;
 HW_Q_xStopReq	:= axis.OUT_xStopReq;
+axis.IN_xAck := HW_I_xAck;
+
 axis.IN_xRunning := HW_I_xRunning;
+
+(* ref switch *)
+axis.IN_xSwitch := HW_I_xSwitch;
 
 (* mode *)
 HW_Q_wModeReq := INT_TO_WORD(axis.OUT_iModeReq);
+IF axis.INTERN_xErrorStop THEN
+	axis.OUT_iModeReq := 0;
+END_IF
 
 (* position *)
-axis.IN_rActualPosition := DWORD_TO_REAL(WORDS_OF_DWORD(LOW:= HW_I_wActualPositionL, HIGH:=HW_I_wActualPositionH));
-DWORD_OF_WORDS(IN:= REAL_TO_DWORD(axis.OUT_rTargetPosition), LOW=>HW_Q_wTargetPositionL , HIGH=>HW_Q_wTargetPositionH );
+tmpDINT := DWORD_TO_DINT(WORDS_OF_DWORD(LOW:= HW_I_wActualPositionL, HIGH:=HW_I_wActualPositionH));
+axis.IN_rActualPosition := DINT_TO_REAL(tmpDINT) / rMicroStepsPerUnit;
+HW_Q_wTargetPositionH := DWORD_OF_WORDS(IN:= REAL_TO_DWORD(axis.OUT_rTargetPosition*rMicroStepsPerUnit), LOW=>HW_Q_wTargetPositionL);
 
 (* speed *)
-axis.IN_rActualSpeed := WORD_TO_REAL(HW_I_wActualSpeed);
-HW_Q_wTargetSpeed := REAL_TO_WORD(axis.OUT_rTargetSpeed);
+axis.IN_rActualSpeed := INT_TO_REAL(WORD_TO_INT(HW_I_wActualSpeed)) / rMicroStepsPerUnit;
+HW_Q_wTargetSpeed := REAL_TO_WORD(axis.OUT_rTargetSpeed * rMicroStepsPerUnit);
+axis.INTERN_xStillstand := axis.IN_xPowered AND NOT axis.IN_xRunning AND axis.IN_rActualSpeed = 0.0 AND NOT axis.INTERN_xErrorStop;
 
 (* acceleration and deceleration *)
-HW_Q_wTargetAcc := REAL_TO_WORD(axis.OUT_rTargetAcc);
-HW_Q_wTargetDec := REAL_TO_WORD(axis.OUT_rTargetDec);
+HW_Q_wTargetAcc := REAL_TO_WORD(axis.OUT_rTargetAcc * rMicroStepsPerUnit);
+HW_Q_wTargetDec := REAL_TO_WORD(axis.OUT_rTargetDec * rMicroStepsPerUnit);
 
+(* checksum and busy*)
+internChecksum := WORD_TO_INT(HW_Q_wModeReq)
++ WORD_TO_INT(HW_Q_wTargetPositionL)
++ WORD_TO_INT(HW_Q_wTargetPositionH)
++ WORD_TO_INT(HW_Q_wTargetSpeed)
++ WORD_TO_INT(HW_Q_wTargetAcc)
++ WORD_TO_INT(HW_Q_wTargetDec);
+Axis.INTERN_xBusy := WORD_TO_INT(HW_I_wCheckSum) <> internChecksum; 
+Axis.INTERN_xValuesOK :=Axis.INTERN_xReqValueCheck AND NOT Axis.INTERN_xBusy;
 
+(* ready for job*)
+Axis.INTERN_xReady := TOF_Connected.Q AND NOT Axis.INTERN_xErrorStop AND axis.IN_xPowered;
