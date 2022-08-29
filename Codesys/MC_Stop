@@ -10,20 +10,71 @@ VAR_OUTPUT
 	Q_xError		: BOOL;
 END_VAR
 VAR
+	iState : INT;
+	inst_Timeout : FB_StepTimeout;
 END_VAR
 VAR_IN_OUT
 	Axis : Axis_Ref;
 END_VAR
 
-IF 	NOT axis.INTERN_xBusy 
-	AND axis.INTERN_xReady 
-	AND Axis.IN_xRunning 
-	AND I_xExecute 
-THEN
+CASE iState OF 
+
+	0: 
+
+		IF Axis.INTERN_xReady 
+		AND Axis.IN_xPowered 
+		AND I_xExecute
+		AND (I_rDeceleration <> 0.0)	 
+		AND Axis.IN_xRunning
+		THEN
+		iState := 10;
+		END_IF;
+		
+	10:
 	Axis.OUT_iModeReq := 0;
-	Axis.OUT_rTargetDec := I_rDeceleration;
-	Axis.OUT_rTargetSpeed := 0;	
+	Axis.OUT_rTargetDec := I_rDeceleration;	
+	Axis.INTERN_xReqValueCheck := TRUE;
+
+	IF Axis.INTERN_xValuesOK THEN
+		Axis.INTERN_xReqValueCheck := FALSE;
+		Axis.OUT_xStopReq := TRUE;
+		iState := 20;
+	END_IF;
+
+	20:
+	IF Axis.IN_xAck THEN 
+		Axis.OUT_xStopReq := FALSE;
+		iState := 30;
+	END_IF;	
+	
+	30:
+	IF  NOT Axis.IN_xRunning THEN
+		Axis.OUT_iModeReq := 0;
+		iState := 40;
+	END_IF;
+
+	40:
+	
+	IF  NOT I_xExecute THEN
+		iState := 0;
+	END_IF;
+	
+END_CASE;
+
+
+(*timeout*)
+inst_Timeout(I_xEnable:= iState <> 0 , I_iStep:= iState, I_tTimeout := T#10S);
+IF inst_Timeout.Q_xError THEN
+	iState := 0;
+END_IF;
+(*Error*)
+IF inst_Timeout.Q_xError THEN
+	Q_xError := TRUE;
+	Axis.INTERN_xErrorStop := TRUE;
+ELSIF Axis.INTERN_xReset THEN
+	Q_xError := FALSE;
 END_IF
 
+(*output*)
 Q_xDone := I_xExecute AND NOT Axis.IN_xRunning;
 Q_xBusy := I_xExecute AND NOT Q_xDone;
