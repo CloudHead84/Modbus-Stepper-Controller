@@ -1,0 +1,91 @@
+FUNCTION_BLOCK MC_MoveRelative
+VAR_INPUT
+	I_xExecute		: BOOL;
+	I_rPosition		: REAL;
+	I_rVelocity		: REAL;
+	I_rAcceleration	: REAL;
+	I_rDeceleration : REAL;
+END_VAR
+VAR_OUTPUT
+	Q_xDone			: BOOL;
+	Q_xBusy			: BOOL;
+	Q_xActive		: BOOL;
+	Q_xError		: BOOL;
+END_VAR
+VAR_IN_OUT
+	Axis : Axis_Ref;
+END_VAR
+VAR
+	rTargetPos : REAL;
+	iState : INT;
+	inst_Timeout : FB_StepTimeout;	
+END_VAR
+
+CASE iState OF
+	(*idle*)
+	0:
+	rTargetPos := 0.0;
+	
+	IF Axis.INTERN_xReady
+		AND I_xExecute
+		AND (I_rVelocity <> 0.0)
+		AND (I_rPosition <> 0.0)
+		AND (I_rAcceleration <> 0.0)
+		AND (I_rDeceleration <> 0.0)		
+		AND NOT Axis.IN_xRunning 
+		AND Axis.INTERN_xRef
+		THEN
+		iState := 10;
+	END_IF;
+	
+	10:
+	Axis.OUT_iModeReq := 50;
+	
+	Axis.OUT_rTargetPosition := I_rPosition;
+	rTargetPos				:= Axis.IN_rActualPosition + Axis.OUT_rTargetPosition;
+	Axis.OUT_rTargetSpeed 	:= I_rVelocity;
+	
+	Axis.OUT_rTargetAcc 	:= I_rAcceleration;
+	Axis.OUT_rTargetDec 	:= I_rDeceleration;
+	
+	Axis.INTERN_xReqValueCheck := TRUE;
+	
+	IF Axis.INTERN_xValuesOK THEN
+		iState := 20;
+	END_IF;
+	
+	20:
+	Axis.INTERN_xReqValueCheck := FALSE;
+	Axis.OUT_xStartReq := TRUE;
+	
+	IF  Axis.IN_xAck THEN
+		iState := 30;
+		Axis.OUT_xStartReq := FALSE;
+	END_IF;
+	
+	30:
+	Axis.OUT_xStartReq := FALSE;
+	
+
+	IF NOT I_xExecute THEN
+		iState := 0;
+	END_IF;
+	
+END_CASE;
+
+(*timeout*)
+inst_Timeout(I_xEnable:= iState <> 0 AND iState <> 30  , I_iStep:= iState);
+IF inst_Timeout.Q_xError THEN
+	iState := 0;
+END_IF;
+(*Error*)
+IF inst_Timeout.Q_xError THEN
+	Q_xError := TRUE;
+	Axis.INTERN_xErrorStop := TRUE;
+ELSIF Axis.INTERN_xReset THEN
+	Q_xError := FALSE;
+END_IF
+
+(* outputs*)
+Q_xDone	:= iState <> 0 AND iState = 30 AND (axis.IN_rActualPosition = rTargetPos);
+Q_xBusy := iState <> 0;
