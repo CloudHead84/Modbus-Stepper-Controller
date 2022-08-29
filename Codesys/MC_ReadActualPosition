@@ -1,0 +1,24 @@
+FUNCTION_BLOCK MC_ReadActualPosition
+VAR_INPUT
+	I_xEnable	: BOOL;
+END_VAR
+VAR_OUTPUT
+	Q_xValid	: BOOL;
+	Q_xBusy		: BOOL;
+	Q_xError	: BOOL;
+	Q_rPosition	: REAL;
+END_VAR
+VAR
+END_VAR
+VAR_IN_OUT
+	Axis : AXIS_REF;
+END_VAR
+
+
+IF I_xEnable THEN
+  Q_rPosition := Axis.IN_rActualPosition;
+  Q_xValid := TRUE;
+else
+  Q_rPosition := 0.0;
+  Q_xValid := FALSE;
+end_IF; 
