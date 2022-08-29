@@ -15,6 +15,8 @@ struct REF_AXIS {
     bool OUT_xLifeBitFB;    
     bool OUT_xPowered;
     bool OUT_xRunning;   
+    bool OUT_xAck;  
+    bool OUT_xSwitch; 
     long OUT_diActualPosition;  
     float OUT_rActualSpeed;   
     word OUT_wCheckSum;   
