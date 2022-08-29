@@ -1,0 +1,22 @@
+FUNCTION_BLOCK FB_StepTimeout
+VAR_INPUT
+	I_xEnable : BOOL;
+	I_iStep	: INT;
+	I_tTimeout : TIME := t#3s;
+END_VAR
+VAR_OUTPUT
+	Q_xError : BOOL;
+END_VAR
+VAR
+	ton_timeout : TON ;
+	iStep_old: INT;
+	xTrigger: BOOL;
+END_VAR
+
+xTrigger := iStep_old = I_iStep AND I_xEnable;
+
+ton_timeout(IN:= xTrigger , PT:=I_tTimeout);
+
+Q_xError := ton_timeout.Q ;
+
+iStep_old := I_iStep;
