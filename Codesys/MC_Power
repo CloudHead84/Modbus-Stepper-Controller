@@ -14,19 +14,19 @@ VAR_IN_OUT
 	Axis : Axis_Ref;
 END_VAR
 
-//timeout error
+(* timeout error *)
 ton_Error(	IN		:= Axis.OUT_xPowerOnReq <> Axis.IN_xPowered, 
 			PT		:= Axis.INTERN_tErrorTime);
 
-//reset global error		
+(* reset global error *)
 IF ton_Error.Q THEN
-	Axis.INTERN_xErrorBlock := TRUE;
-END_IF
+	Axis.INTERN_xErrorStop := TRUE;
+END_IF;
 
-//block outputs
+(* block outputs *)
 Q_xStatus 			:= Axis.IN_xPowered AND Axis.IN_xPowered;
 Q_xError			:= ton_Error.Q;
 Q_xBusy				:= (Axis.OUT_xPowerOnReq <> Axis.IN_xPowered) AND NOT ton_Error.Q;
 
-//outputs to axis
-Axis.OUT_xPowerOnReq 	:= I_xEnable;
+(* outputs to axis *)
+Axis.OUT_xPowerOnReq 	:= I_xEnable AND NOT Axis.INTERN_xErrorStop;
