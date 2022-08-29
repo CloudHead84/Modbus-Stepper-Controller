@@ -1,14 +1,14 @@
 // -------------------------------------------------------------------------------------------
 // ------------------ INCLUDE ----------------------------------------------------------------
 // -------------------------------------------------------------------------------------------
-#include <SPI.h>
 #include <NativeEthernet.h>
 #include <Arduino.h>
-#include <AccelStepper.h>
-#include <MultiStepper.h>
 #include "TeensyThreads.h"
 #include "modbus.h"
 #include "stepper_utils.h"
+#include <AsyncStepper.hpp>
+
+
 
 // -------------------------------------------------------------------------------------------
 // ------------------ GLOBAL VARS ------------------------------------------------------------
@@ -30,18 +30,25 @@ extern uint16_t mb_input_regs[MAX_INP_REGS];
 extern uint16_t mb_holding_regs[MAX_HOLD_REGS];
 
 // Stepper 1
-#define STEPPER1_DIR_PIN 1
-#define STEPPER1_STEP_PIN 2
 #define STEPPER1_ENABLE_PIN 0
+#define STEPPER1_SWITCH_PIN 3
 
-AccelStepper stepper1(AccelStepper::DRIVER, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN);
+const int stepper_dir_pin = 1;
+const int stepper_step_pin = 2;
+
+const int stepper_steps = 800;
+
+
+
+AsyncStepper stepper1(stepper_steps, stepper_dir_pin, stepper_step_pin);
+
 REF_AXIS axis[1];
 
 
 // threads
 int threadid;
 
-
+long AbsPos;
 
 
 void updateIO()
@@ -60,13 +67,17 @@ void updateIO()
     //OUTs        
     mb_discrete_input[0] = axis[0].OUT_xLifeBitFB;
     mb_discrete_input[1] = axis[0].OUT_xPowered;    
-    mb_discrete_input[2] = axis[0].OUT_xRunning;       
+    mb_discrete_input[2] = axis[0].OUT_xRunning;    
+    mb_discrete_input[3] = axis[0].OUT_xAck;   
+    mb_discrete_input[4] = axis[0].OUT_xSwitch;       
     mb_input_regs[0] = create_words(axis[0].OUT_diActualPosition,false);
     mb_input_regs[1] = create_words(axis[0].OUT_diActualPosition,true);
     mb_input_regs[2] = (int)axis[0].OUT_rActualSpeed;
   
     axis[0].OUT_wCheckSum = (word)mb_holding_regs[0] + (word)mb_holding_regs[1] + (word)mb_holding_regs[2] + (word)mb_holding_regs[3] + (word)mb_holding_regs[4] + (word)mb_holding_regs[5];
     mb_input_regs[3] = axis[0].OUT_wCheckSum;         
+
+    axis[0].OUT_xLifeBitFB = axis[0].IN_xLifeBit;
 }
 
 
@@ -76,44 +87,144 @@ void updateIO()
 void thread_stepper() {
   while (1) {
 
+ 
+  if (not axis[0].IN_xStartReq and axis[0].OUT_xAck) 
+  {
+        axis[0].OUT_xAck = false;                  
+  }
 
+
+    
 switch (axis[0].IN_iModeReq) {
   
+    // homing-------------------------------------------------------------------------------
+    case 20:
+
+     if (not digitalRead(STEPPER1_SWITCH_PIN))
+      {
+        stepper1.Stop();
+      }   
+    
+    else if (axis[0].IN_xStartReq and not axis[0].OUT_xAck) 
+        {
+        axis[0].OUT_xAck = true;
+
+        if (axis[0].IN_rTargetSpeed > 0 )
+        {
+        stepper1.SetSpeed(axis[0].IN_rTargetSpeed);  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+        stepper1.RotateContinuous(AsyncStepper::CW);  
+        } 
+        else    
+        {
+        stepper1.SetSpeed(axis[0].IN_rTargetSpeed * -1);  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+        stepper1.RotateContinuous(AsyncStepper::CCW); 
+        }
+                    
+    }
+    break;    
+    
+       case 21:
+
+     if (digitalRead(STEPPER1_SWITCH_PIN))
+      {
+        stepper1.Stop();
+        stepper1.SetAbsoluteStep(axis[0].IN_diTargetPosition); 
+      }   
+    
+    else if (axis[0].IN_xStartReq and not axis[0].OUT_xAck) 
+        {
+        axis[0].OUT_xAck = true;
+
+        if (axis[0].IN_rTargetSpeed > 0 )
+        {
+        stepper1.SetSpeed(axis[0].IN_rTargetSpeed);  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+        stepper1.RotateContinuous(AsyncStepper::CW);  
+        } 
+        else    
+        {
+        stepper1.SetSpeed(axis[0].IN_rTargetSpeed * -1);  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+        stepper1.RotateContinuous(AsyncStepper::CCW); 
+        }
+                    
+    }
+    break;  
+    
+    
     // velocity -------------------------------------------------------------------------------
     case 30:
     
-    if (axis[0].IN_xStartReq ) 
+    if (axis[0].IN_xStartReq and not axis[0].OUT_xAck) 
         {
-        stepper1.setMaxSpeed(axis[0].IN_rTargetSpeed);  
-        stepper1.setAcceleration(1000.0);  
-        stepper1.setSpeed(axis[0].IN_rTargetSpeed);
+        axis[0].OUT_xAck = true;
+
+        if (axis[0].IN_rTargetSpeed > 0 )
+        {
+        stepper1.SetSpeed(axis[0].IN_rTargetSpeed);  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+        stepper1.RotateContinuous(AsyncStepper::CW);  
+        } 
+        else    
+        {
+        stepper1.SetSpeed(axis[0].IN_rTargetSpeed * -1);  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+        stepper1.RotateContinuous(AsyncStepper::CCW); 
+        }
+                    
     }
-    stepper1.runSpeed();
     break;
 
     // absolute -------------------------------------------------------------------------------
     case 40:
     
-    if (axis[0].IN_xStartReq ) 
+    if (axis[0].IN_xStartReq and not axis[0].OUT_xAck) 
         {
-        stepper1.setAcceleration(axis[0].IN_rTargetAcc);  
-        stepper1.setMaxSpeed(axis[0].IN_rTargetSpeed);
-        stepper1.moveTo(axis[0].IN_diTargetPosition); 
+          
+        axis[0].OUT_xAck = true;
+        stepper1.SetSpeed(axis[0].IN_rTargetSpeed);  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+
+
+        AbsPos = axis[0].IN_diTargetPosition - stepper1.GetAbsoluteStep();
+
+        
+        if (AbsPos > 0 )
+        {
+        stepper1.Rotate(AbsPos,AsyncStepper::CW);
+        }
+        else
+        { 
+         stepper1.Rotate(AbsPos,AsyncStepper::CCW);
+        }
+        
     }
-    stepper1.run();
     break;
     
     // relative -------------------------------------------------------------------------------
     case 50:
     
-    if (axis[0].IN_xStartReq ) 
+    if (axis[0].IN_xStartReq and not axis[0].OUT_xAck) 
         {
-        stepper1.setAcceleration(axis[0].IN_rTargetAcc);  
-        stepper1.setMaxSpeed(axis[0].IN_rTargetSpeed);
-        stepper1.move(axis[0].IN_diTargetPosition); 
-    }
-    stepper1.run();
+          
+        axis[0].OUT_xAck = true;
+        stepper1.SetSpeed(axis[0].IN_rTargetSpeed);  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+        if (axis[0].IN_diTargetPosition > 0 )
+        {
+        stepper1.Rotate(axis[0].IN_diTargetPosition,AsyncStepper::CW);
+        }
+        else
+        { 
+         stepper1.Rotate(axis[0].IN_diTargetPosition,AsyncStepper::CCW);
+        }
+       }
+    
     break;
+
+    
     default:
     // Statement(s)
     break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
@@ -123,28 +234,34 @@ switch (axis[0].IN_iModeReq) {
 
 
     
-    if (axis[0].IN_xStopReq) 
+    if (axis[0].IN_xStopReq and stepper1.GetCurrentSpeed() != 0 and not axis[0].OUT_xAck) 
     {
-        stepper1.stop();
+        axis[0].OUT_xAck = true;  
+        stepper1.SetAcceleration(axis[0].IN_rTargetAcc, axis[0].IN_rTargetDec); 
+        stepper1.Break();
     }
 
 
     if (axis[0].IN_xPowerOnReq) 
     {
-       stepper1.enableOutputs();
+       digitalWrite(STEPPER1_ENABLE_PIN, LOW);
        axis[0].OUT_xPowered = true;
-    }else{
-       stepper1.disableOutputs();
+    }
+    else
+    {
+       digitalWrite(STEPPER1_ENABLE_PIN, HIGH);
        axis[0].OUT_xPowered = false;
+       Serial.println("power off");
     }
 
 
 
-    
-     axis[0].OUT_diActualPosition = stepper1.currentPosition(); 
-     axis[0].OUT_rActualSpeed = stepper1.speed();
-     axis[0].OUT_xRunning = stepper1.isRunning();  
-     axis[0].OUT_xLifeBitFB = axis[0].IN_xLifeBit;
+
+     axis[0].OUT_xSwitch = not digitalRead(STEPPER1_SWITCH_PIN);
+     axis[0].OUT_diActualPosition = stepper1.GetAbsoluteStep(); 
+     axis[0].OUT_rActualSpeed = stepper1.GetCurrentSpeed();
+     axis[0].OUT_xRunning = axis[0].OUT_rActualSpeed != 0;  
+     stepper1.Update();
      threads.yield();
   }
 }
@@ -153,7 +270,12 @@ switch (axis[0].IN_iModeReq) {
 // -------------------------------------------------------------------------------------------
 // ------------------ SETUP ------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------
-void setup() {
+  void setup() {
+
+    pinMode(STEPPER1_ENABLE_PIN, OUTPUT);
+    digitalWrite(STEPPER1_ENABLE_PIN, HIGH);  
+    
+    pinMode(STEPPER1_SWITCH_PIN, INPUT_PULLUP);
 
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
@@ -169,15 +291,10 @@ void setup() {
    
   // start the Modbus TCP server
 
-  // stepper
-    stepper1.setPinsInverted(false,false,true);  
-    stepper1.setEnablePin(STEPPER1_ENABLE_PIN);
-    stepper1.setMaxSpeed(2000.0);
-    stepper1.setAcceleration(1000.0);
-    stepper1.setMinPulseWidth(40);
+  // stepper      
 
   threads.setMicroTimer(10);
-  threadid = threads.addThread(thread_stepper,1);
+  threads.addThread(thread_stepper);
 
 
   
