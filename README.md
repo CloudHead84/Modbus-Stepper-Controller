@@ -11,7 +11,7 @@ So this project consists of two parts:
 First Prototype for testing communication via modbus and implementing the slave firmware in arduino:
 
 videos: https://youtube.com/shorts/akJ87RP2c9Q?feature=share  
-        https://youtu.be/qdu1bqlBr8Q
-        
+        https://youtu.be/qdu1bqlBr8Q  
+        https://youtu.be/bMGx0n8RxtE  
         
 ![FIrst Prototype](https://user-images.githubusercontent.com/101837284/158897530-49c3237d-0893-4524-8a08-eb9b87bab08a.jpg)
