@@ -22,10 +22,18 @@
 //-----------------------------------------------------------------------------
 
 #define MAX_AXIS     4 
-#define MAX_DISCRETE_INPUT 		8 * MAX_AXIS  
-#define MAX_COILS 				8 * MAX_AXIS 
-#define MAX_HOLD_REGS 			6 * MAX_AXIS 
-#define MAX_INP_REGS			4 * MAX_AXIS 
+
+#define DISCRETE_INPUT_COUNT 8
+#define COIL_COUNT 8
+#define HOLD_REGS_COUNT 6
+#define INP_REGS_COUNT 4
+
+#define MAX_DISCRETE_INPUT 		DISCRETE_INPUT_COUNT * MAX_AXIS  
+#define MAX_COILS 				    COIL_COUNT * MAX_AXIS 
+#define MAX_HOLD_REGS 			  HOLD_REGS_COUNT * MAX_AXIS 
+#define MAX_INP_REGS			    INP_REGS_COUNT * MAX_AXIS 
+
+
 
 #define MB_FC_NONE							0
 #define MB_FC_READ_COILS					1
