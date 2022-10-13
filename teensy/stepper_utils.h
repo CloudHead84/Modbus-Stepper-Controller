@@ -22,6 +22,15 @@ struct REF_AXIS {
     word OUT_wCheckSum;   
 } ; 
 
+struct STEPPER_CONFIG { 
+   int FullSteps;   
+   int DirPin;  
+   int StepPin;          
+   int EnablePin;    
+   int SwitchPin;   
+   
+} ; 
+
 //-----------------------------------------------------------------------------
 // Concatenate two words into an long
 //-----------------------------------------------------------------------------
