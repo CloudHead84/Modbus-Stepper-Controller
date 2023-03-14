@@ -1,6 +1,6 @@
 # Modbus-Stepper-Controller
 Step/Dir Controller based on teensy. Acts as a Modbus tcp slave, so a modbus master is needed for the setup. the master will need a library issuing different commands over the modbus registers.
-For the motion control, following library is used:
+For the motion control, following arduino library is used:
 https://github.com/luisllamasbinaburo/Arduino-AsyncStepper
 
 So this project consists of two parts:
