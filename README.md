@@ -5,7 +5,7 @@ https://github.com/luisllamasbinaburo/Arduino-AsyncStepper
 
 So this project consists of two parts:
 
-1 - The MCU (teensy 4.1) "firmware" (including AsylcStepper Lib)  
+1 - The MCU (teensy 4.1) "firmware" (including AsyncStepper Lib)  
 2 - The accompanying library for the PLC (OpenPLC or Codesys)  
 
 ![Test](https://user-images.githubusercontent.com/101837284/159583834-0b0fe905-bf78-46a9-b57c-8987204d72fe.png)
